@@ -1,40 +1,35 @@
 package com.test.login.controller;
 
-import java.net.URI;
-import java.util.Collections;
-
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-
+import com.test.login.enums.RoleName;
+import com.test.login.exception.AppException;
+import com.test.login.model.Role;
+import com.test.login.model.User;
+import com.test.login.payloads.*;
+import com.test.login.security.CurrentUser;
+import com.test.login.security.JwtTokenProvider;
+import com.test.login.security.UserPrincipal;
+import com.test.login.service.RoleService;
+import com.test.login.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.test.login.enums.RoleName;
-import com.test.login.exception.AppException;
-import com.test.login.model.Role;
-import com.test.login.model.User;
-import com.test.login.payloads.ApiResponse;
-import com.test.login.payloads.JwtAuthenticationResponse;
-import com.test.login.payloads.LoginRequest;
-import com.test.login.payloads.SignUpRequest;
-import com.test.login.security.JwtTokenProvider;
-import com.test.login.service.RoleService;
-import com.test.login.service.UserService;
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+import java.net.URI;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/api")
-public class UserController {
+public class UserAuthenticateController {
 
 	@Autowired
 	public UserService userService;
@@ -51,9 +46,18 @@ public class UserController {
 	@Autowired
 	PasswordEncoder passwordEncoder;
 
-	@RequestMapping("/msg")
+	@GetMapping("/msg")
 	public String getMsg() {
-		return "Sekhar";
+
+		return "Hello world!";
+	}
+
+	@GetMapping("/me")
+	@PreAuthorize("hasRole('USER')")
+	public UserSummary getCurrentUser(@CurrentUser UserPrincipal currentUser) {
+		UserSummary userSummary = new UserSummary(currentUser.getId(),
+				currentUser.getUsername(), currentUser.getName());
+		return userSummary;
 	}
 
 	@PostMapping("/signin")
@@ -85,7 +89,9 @@ public class UserController {
 					HttpStatus.BAD_REQUEST);
 		}
 
-		User user = new User(signupReq.getUsername(), signupReq.getFirstName(), signupReq.getLastName(), signupReq.getEmail(), signupReq.getAddress(), signupReq.getPassword());
+		User user = new User(signupReq.getUsername(), signupReq.getFirstName(),
+				signupReq.getLastName(), signupReq.getEmail(),
+				signupReq.getAddress(), signupReq.getPassword());
 
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 
