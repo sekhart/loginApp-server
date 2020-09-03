@@ -29,7 +29,7 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/api")
-public class UserAuthenticateController {
+public class AuthenticationController {
 
 	@Autowired
 	public UserService userService;
@@ -52,15 +52,7 @@ public class UserAuthenticateController {
 		return "Hello world!";
 	}
 
-	@GetMapping("/me")
-	@PreAuthorize("hasRole('USER')")
-	public UserSummary getCurrentUser(@CurrentUser UserPrincipal currentUser) {
-		UserSummary userSummary = new UserSummary(currentUser.getId(),
-				currentUser.getUsername(), currentUser.getName());
-		return userSummary;
-	}
-
-	@PostMapping("/signin")
+	@PostMapping("/auth/signin")
 	public ResponseEntity<?> authenticateUser(
 			@Valid @RequestBody LoginRequest loginReq) {
 		Authentication authentication = authenticationManager
@@ -72,7 +64,7 @@ public class UserAuthenticateController {
 		return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
 	}
 
-	@PostMapping("/signup")
+	@PostMapping("/auth/signup")
 	@Transactional
 	public ResponseEntity<?> registerUser(
 			@Valid @RequestBody SignUpRequest signupReq) {
